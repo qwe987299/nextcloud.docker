@@ -1,0 +1,52 @@
+services:
+
+  nextcloud:
+    image: nextcloud
+    container_name: nextcloud_web
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nextcloud:/var/www/html
+    links:
+      - db
+      - redis
+
+  db:
+    image: mariadb
+    container_name: nextcloud_mariadb
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-allowed-packet=10G
+    environment:
+      TZ: Asia/Taipei
+      MYSQL_ROOT_PASSWORD: password1234
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: password1234
+      
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: nextcloud_phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=db
+      - UPLOAD_LIMIT=10G
+
+  redis:
+    image: redis:alpine
+    container_name: nextcloud_redis
+    restart: always
+    environment:
+        - TZ=Asia/Taipei
+    volumes:
+        - ./redis:/data
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_HOST_PASSWORD"
+    env_file:
+        - redis.env
